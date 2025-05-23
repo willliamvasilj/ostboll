@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Milles Ostbollar</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Press Start 2P', cursive;
+      background: url('https://cdn.pixabay.com/photo/2016/12/06/09/30/cheese-puffs-1884325_960_720.jpg') repeat;
+      color: #fff;
+      text-align: center;
+      overflow: auto;
+    }
+    header {
+      background-color: #222;
+      padding: 20px;
+      font-size: 1.5em;
+    }
+    .game-section {
+      margin: 0 auto;
+      padding: 20px;
+      max-width: 800px;
+    }
+    canvas {
+      background: rgba(0, 0, 0, 0.9);
+      border: 3px solid #fff;
+      display: block;
+      margin: 20px auto;
+    }
+    .btn {
+      padding: 15px 30px;
+      background: #fff;
+      color: #000;
+      border: none;
+      border-radius: 10px;
+      font-size: 1em;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    .btn:hover {
+      background: #ffcc00;
+    }
+    .timer {
+      font-size: 1em;
+      background: #000;
+      padding: 10px;
+      margin: 10px auto;
+      max-width: 300px;
+      border: 2px solid #fff;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    MILLE ÄLSKAR OSTBOLLAR - SPELET
+  </header>
+
+  <div class="game-section">
+    <h2>Hjälp Mille att samla ostbollar!</h2>
+    <div id="timer" class="timer">Tid kvar: 60 sekunder</div>
+    <canvas id="gameCanvas" width="800" height="500"></canvas>
+    <div>
+      <button class="btn" onclick="startGame()">Starta Spelet</button>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const timerDisplay = document.getElementById('timer');
+    let keys = {};
+    let score = 0;
+    let interval;
+    let countdown;
+    let timeLeft = 60;
+
+    const mille = { x: 50, y: 250, width: 40, height: 60, color: 'blue' };
+    const ostbollar = [];
+
+    function spawnOstboll() {
+      const size = 20;
+      ostbollar.push({
+        x: Math.random() * (canvas.width - size),
+        y: Math.random() * (canvas.height - size),
+        width: size,
+        height: size,
+        color: 'orange'
+      });
+    }
+
+    function drawCharacter(obj, label) {
+      ctx.fillStyle = obj.color;
+      ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+      ctx.fillStyle = 'white';
+      ctx.fillRect(obj.x + 8, obj.y + 10, 5, 5);
+      ctx.fillRect(obj.x + 25, obj.y + 10, 5, 5);
+      ctx.fillStyle = 'red';
+      ctx.fillRect(obj.x + 12, obj.y + 30, 15, 5);
+      ctx.fillStyle = 'white';
+      ctx.font = '10px Arial';
+      ctx.fillText(label, obj.x, obj.y - 5);
+    }
+
+    function drawOstboll(obj, label) {
+      ctx.fillStyle = obj.color;
+      ctx.beginPath();
+      ctx.arc(obj.x + obj.width / 2, obj.y + obj.height / 2, obj.width / 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'white';
+      ctx.font = '10px Arial';
+      ctx.fillText(label, obj.x - 5, obj.y - 5);
+    }
+
+    function update() {
+      if (keys['w']) mille.y -= 5;
+      if (keys['s']) mille.y += 5;
+      if (keys['a']) mille.x -= 5;
+      if (keys['d']) mille.x += 5;
+
+      mille.x = Math.max(0, Math.min(canvas.width - mille.width, mille.x));
+      mille.y = Math.max(0, Math.min(canvas.height - mille.height, mille.y));
+
+      for (let i = ostbollar.length - 1; i >= 0; i--) {
+        const ob = ostbollar[i];
+        if (mille.x < ob.x + ob.width && mille.x + mille.width > ob.x &&
+            mille.y < ob.y + ob.height && mille.y + mille.height > ob.y) {
+          ostbollar.splice(i, 1);
+          score++;
+          spawnOstboll();
+        }
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawCharacter(mille, 'Mille');
+      ostbollar.forEach(ob => drawOstboll(ob, 'Ostboll'));
+      ctx.fillStyle = 'white';
+      ctx.font = '16px Arial';
+      ctx.fillText('Poäng: ' + score, 10, 20);
+    }
+
+    function gameLoop() {
+      update();
+      draw();
+    }
+
+    function updateTimer() {
+      timeLeft--;
+      timerDisplay.textContent = 'Tid kvar: ' + timeLeft + ' sekunder';
+      if (timeLeft <= 0) {
+        clearInterval(interval);
+        clearInterval(countdown);
+        alert('Tiden är slut! Du fick ' + score + ' poäng!');
+      }
+    }
+
+    function startGame() {
+      keys = {};
+      score = 0;
+      timeLeft = 60;
+      ostbollar.length = 0;
+      spawnOstboll();
+      document.addEventListener('keydown', (e) => { keys[e.key.toLowerCase()] = true; });
+      document.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
+      clearInterval(interval);
+      clearInterval(countdown);
+      interval = setInterval(gameLoop, 1000 / 60);
+      countdown = setInterval(updateTimer, 1000);
+    }
+  </script>
+</body>
+</html>
